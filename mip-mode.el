@@ -94,7 +94,7 @@
 (defvar mip--open-project-files-hash nil
   "Hash table containing filenames as keys and full paths as values for the currently open project.")
 
-(defvar mip--modeline-string nil
+(defvar mip--mode-line-string nil
   "What will be displayed on the mode line.")
 
 (defvar mip-mode-map (make-sparse-keymap)
@@ -154,9 +154,15 @@ buffer."
 The project name is appended to the global-mode-string, and
 should be the rightmost visible string on the mode line.
 
-Project is represented as '[#project-name]."
+Project is represented according to mip-mode-line-format."
   :type 'boolean
   :group 'mip)
+
+(defcustom mip-mode-line-format " [%s]"
+  "Template for displaying open project on mode line.
+
+A string is printed verbatim in the mode line except for %-constructs:
+  %s -- print project name.")
 
 (defcustom mip-open-project-after-find-file nil
   "Open project if a found file belongs to it.
@@ -320,6 +326,14 @@ Return nil if FILE doesn't belong to any project."
                     (setq interrupted t))))))
     interrupted))
 
+(defun mip-maybe-append-mode-line-string (string)
+  "Appends STRING to global-mode-string if it isn't there already."
+  (let ((found nil))
+    (dolist (string global-mode-string t)
+      (if (eq 'string 'mip--mode-line-string)
+          (setq found t)))
+    (unless found
+      )))
 
 (defun mip-open-project (project)
   "Open project PROJECT if it's not already open.
@@ -330,14 +344,6 @@ Close previously open project if any."
               (mip-close-project mip--open-project)
             t)
           (progn
-            (let ((found nil))
-              (dolist (string global-mode-string t)
-                (if (eq string mip--modeline-string)
-                  (setq found t)))
-              (unless found
-                (add-to-list 'global-mode-string mip--modeline-string t)))
-            (if mip--open-project
-                (mip-close-project mip--open-project))
             (setq mip--open-project project
                   mip--open-project-path (mip-find-project-directory project)
                   mip--open-project-files-hash (make-hash-table :test 'equal))
@@ -345,7 +351,9 @@ Close previously open project if any."
             (cd mip--open-project-path)
             (run-hooks 'mip-open-project-hook)
             (if mip-show-on-mode-line
-                (setq mip--modeline-string (concat " [#" mip--open-project "]")))
+                (progn
+                  (setq mip--mode-line-string (format mip-mode-line-format mip--open-project))
+                  (add-to-list 'global-mode-string mip--mode-line-string t)))
             (message "project %s opened" project)))
     (message "project %s already open" project)))
 
@@ -357,10 +365,11 @@ Close previously open project if any."
                                                       t))
       (progn
         (run-hooks 'mip-close-project-hook)
+        (delq mip--mode-line-string global-mode-string)
         (setq mip--open-project nil
               mip--open-project-path nil
               mip--open-project-files-hash nil
-              mip--modeline-string nil)
+              mip--mode-line-string nil)
         (message "project %s closed" project))))
 
 
@@ -370,7 +379,6 @@ Close previously open project if any."
         (if (and (not (string-equal project mip--open-project)) project)
             (mip-open-project project)))))
 (add-hook 'find-file-hook 'mip-maybe-open-project)
-
 
 ;;; Interactive functions:
 
