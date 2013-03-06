@@ -438,11 +438,11 @@ file."
                         (concat mip--open-project-path "/" file)))))))
 
 
-(define-key mip-mode-map (kbd "C-c wg") 'mip-goto-project)
-(define-key mip-mode-map (kbd "C-c wf") 'mip-find-file-in-open-project)
-(define-key mip-mode-map (kbd "C-c wk") 'mip-close-open-project)
-(define-key mip-mode-map (kbd "C-c wr") 'mip-refresh-open-project)
-(define-key mip-mode-map (kbd "C-c wc") 'mip-get-open-project)
+(define-key mip-mode-map (kbd "C-c pg") 'mip-goto-project)
+(define-key mip-mode-map (kbd "C-c pf") 'mip-find-file-in-open-project)
+(define-key mip-mode-map (kbd "C-c pk") 'mip-close-open-project)
+(define-key mip-mode-map (kbd "C-c pr") 'mip-refresh-open-project)
+(define-key mip-mode-map (kbd "C-c pc") 'mip-get-open-project)
 
 (define-minor-mode mip-mode
   "mip mode"
