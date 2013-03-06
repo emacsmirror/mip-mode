@@ -48,19 +48,19 @@ Check out the commentary for more information.
 
 Interactive functions provided by mip-mode:
 
-* `mip-goto-project` (C-c wg)
+* `mip-goto-project` (C-c pg)
   Prompts for a project to open.
 
-* `mip-find-file-in-open-project` (C-c wf)
+* `mip-find-file-in-open-project` (C-c pf)
   Prompts for a file to open in the current project.
 
-* `mip-close-open-project` (C-c wk)
+* `mip-close-open-project` (C-c pk)
   Closes the current project.
 
-* `mip-refresh-open-project` (C-c wr)
+* `mip-refresh-open-project` (C-c pr)
   Refreshes the list of files belonging to the current project.
 
-* `mip-get-open-project` (C-c wc)
+* `mip-get-open-project` (C-c pc)
   Shows the name of the current project in the minibuffer.
 
 # Todo
