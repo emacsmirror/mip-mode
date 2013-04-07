@@ -82,6 +82,7 @@
 ;;; Code:
 
 (require 'ido)
+(require 'dash)
 
 (defconst mip-mode-version "0.1.0")
 
@@ -268,30 +269,32 @@ Behavior depends on the variable mip-uniquify-file-method."
 
 If RECURSIVE is non-nil, this function is called recursively for
 all subdirectories of PATH."
-  (let ((directories ())
-        (current-files (directory-files path t nil t)))
-    (dolist (file-path current-files nil)
-      (let ((ignore nil))
-        (dolist (regexp mip-ignored-files nil)
-          (if (or (string-match regexp (file-name-nondirectory file-path))
-                  (string-match regexp (file-name-directory file-path)))
-              (setq ignore t)))
-        (if (not ignore)
-            (if (file-directory-p file-path)
-                (if (not (or (string-equal "." (file-name-nondirectory file-path))
-                             (string-equal ".." (file-name-nondirectory file-path))))
-                    (add-to-list 'directories file-path))
-              (mip-open-project-files-hash-put (file-name-nondirectory file-path) file-path)))))
+  (let* ((current-files (directory-files path t nil t))
+         (directories (-filter (lambda (file-path)
+                                 (if (file-directory-p file-path) t)) current-files))
+         (files (-difference current-files directories)))
+    (-each files (lambda (file-path)
+                   (mip-open-project-files-hash-put (file-name-nondirectory file-path) file-path)))
     (if recursive
         (dolist (directory directories t)
-          (mip-scan-path (concat (file-name-as-directory path) (file-name-nondirectory directory)))))))
+          (if (and (not (string-equal (file-name-nondirectory directory) "."))
+                   (not (string-equal (file-name-nondirectory directory) "..")))
+              (mip-scan-path (concat (file-name-as-directory path) (file-name-nondirectory directory))))))))
 
 
-(defun mip-project-files ()
-  "Return a list of files belonging to the open project."
+(defun mip-project-files (filter-ignored)
+  "Return a list of files belonging to the open project.
+
+If FILTER is non-nil, ignored files will be filtered out."
   (let ((files '()))
-    (maphash (lambda (key value)
-               (setq files (cons key files)))
+    (maphash (lambda (filename filepath)
+               (if filter-ignored
+                   (let ((ignore nil))
+                     (-each mip-ignored-files (lambda (rule)
+                                                (setq ignore (string-match rule filepath))))
+                     (if (not ignore)
+                         (setq files (cons filename files))))
+                 (setq files (cons filename files))))
              mip--open-project-files-hash)
     files))
 
@@ -422,16 +425,19 @@ Return and open the chosen project."
     (message "no project open to refresh")))
 
 
-(defun mip-find-file-in-open-project ()
+(defun mip-find-file-in-open-project (arg)
   "Prompt for file in the currently open project.
 
 If there's no open project, one will be opened before finding any
-file."
-  (interactive)
+file.
+
+When called with a prefix argument, all files in the project will
+be shown."
+  (interactive "P")
   (let ((project (if mip--open-project
                      mip--open-project
                    (mip-goto-project)))) ;; Goto a project first if not in one already
-       (let ((file (ido-completing-read (concat "Find file in " mip--open-project ": ") (mip-project-files))))
+       (let ((file (ido-completing-read (concat "Find file in " mip--open-project ": ") (mip-project-files (not arg)))))
          (let ((path (gethash file mip--open-project-files-hash)))
            (find-file (if path
                           path
