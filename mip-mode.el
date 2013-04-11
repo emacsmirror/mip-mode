@@ -159,6 +159,11 @@ Project is represented according to mip-mode-line-format."
   :type 'boolean
   :group 'mip)
 
+(defcustom mip-scan-dot-git nil
+  "Should the '.git'-directory be scanned."
+  :type 'boolean
+  :group 'mip)
+
 (defcustom mip-mode-line-format " [%s]"
   "Template for displaying open project on mode line.
 
@@ -171,19 +176,6 @@ A string is printed verbatim in the mode line except for %-constructs:
 This can be a little distracting if you're working on multiple
 projects at once.  Use with caution."
   :type 'boolean
-  :group 'mip)
-
-(defcustom mip-uniquify-file-method 'path
-  "How duplicate filenames should be uniquified.
-
-number means that a number is appended to the filename.
-Example: file, file<2>, file<3>
-
-path means that the relative path of the file is appended to the
-filename.
-Example: file, file<include>, file<include/foo>"
-  :type '(choice (symbol :tag "path" :value 'path)
-                 (symbol :tag "number" :value 'number))
   :group 'mip)
 
 (defcustom mip-open-project-hook nil
@@ -203,6 +195,34 @@ Example: file, file<include>, file<include/foo>"
   :group 'mip)
 
 
+(defun mip-directory-empty-p (path)
+  "Return t if directory in PATH is empty, nil otherwise."
+  (equal (length (directory-files path)) 2))
+
+
+(defun mip-path-is-dot-git-p (path)
+  "Return t if PATH is '.git', nil otherwise."
+  (string-equal (file-name-nondirectory path) ".git"))
+
+
+(defun mip-path-is-project-root (path)
+  "Return t if PATH is a project root, nil otherwise."
+  (string-equal path (concat mip--open-project-path "/")))
+
+
+(defun mip-should-ignore-path-p (path)
+  "Return t if PATH should be ignored, nil otherwise."
+  (let ((ignore nil))
+    (-each mip-ignored-files (lambda (rule)
+                               (setq ignore (string-match rule path))))
+    ignore))
+
+
+(defun mip-should-skip-path-p (path)
+  "Return t if PATH should be skipped while scanning, nil otherwise."
+  (and (not (string-equal path mip--open-project-path))
+       (and (mip-path-is-dot-git-p path) (not mip-scan-dot-git))
+       (not (mip-directory-empty-p path))))
 
 
 (defun mip-scan-workspace (workspace &optional ignored)
@@ -226,42 +246,56 @@ If IGNORED is a list, projects that match the regexes are ignored."
   "Return a list of projects in WORKSPACES."
   (let ((projects ())
         (ignored mip-ignored-projects))
-    (dolist (workspace workspaces projects)
-      (if (file-directory-p workspace)
-          (setq projects (append projects (mip-scan-workspace workspace ignored)))
-        (error "workspace %s is not a directory" workspace)))))
+    (-each workspaces (lambda (workspace)
+             (if (file-directory-p workspace)
+                 (setq projects (append projects (mip-scan-workspace workspace ignored)))
+               (error "workspace %s is not a directory" workspace))))
+    projects))
 
 
 (defun mip-find-project-directory (project)
   "Return path to the project's directory."
-  (let ((workspaces mip-workspaces)
-        (directory nil))
-    (dolist (workspace workspaces directory)
-      (let ((path (concat (file-name-as-directory workspace) project)))
-        (if (file-exists-p path)
-            (setq directory path))))))
+  (let ((project-directory nil))
+    (-each-while mip-workspaces
+                 (lambda (workspace)
+                   (not project-directory))
+                 (lambda (workspace)
+                   (let ((path (concat (file-name-as-directory workspace) project)))
+                     (if (file-exists-p path)
+                         (setq project-directory path)))))
+    project-directory))
 
 
-(defun mip-open-project-files-hash-put (key value &optional number)
-  "Puts a value into the hash ensuring that the key is unique.
+(defun mip-find-file-in-open-project-starting-with (str)
+  "Returns the unique identifier for the found file, or nil if
+not found."
+  (let ((match nil))
+    (block break
+      (maphash (lambda (key value)
+                 (if (string-prefix-p str key)
+                     (progn
+                       (setq match key)
+                       (return-from break)))) mip--open-project-files-hash))
+    match))
 
-Behavior depends on the variable mip-uniquify-file-method."
-  (if (null mip-uniquify-file-method)
-      (setq mip-uniquify-file-method 'path))
-  (let ((current-value (gethash key mip--open-project-files-hash)))
-    (if current-value
-        (if (eq mip-uniquify-file-method 'number)
-            (progn
-              (setq number 1
-                    key (concat key (format "<%d>" (+ 1 number))))
-              (mip-open-project-files-hash-put key value (+ 1 number)))
-          (progn
-            (let ((path (abbreviate-file-name (file-name-directory value)))
-                  (root mip--open-project-path))
 
-              (setq key (concat key (format "<%s>" (substring path (+ (length root) 1) -1))))
-              (mip-open-project-files-hash-put key value))))
-      (puthash key value mip--open-project-files-hash))))
+(defun mip-open-project-files-hash-put (key value)
+  "Puts a value into the hash ensuring that the key is unique."
+  (let* ((current-value (or (gethash key mip--open-project-files-hash)
+                            (gethash (mip-find-file-in-open-project-starting-with key) mip--open-project-files-hash)))
+         (new-old-key nil)
+         (path (abbreviate-file-name value))
+         (root (file-name-directory path)))
+    (if (and current-value
+             (not (mip-path-is-project-root root)))
+        (progn
+          (remhash key mip--open-project-files-hash)
+          (setq new-old-key (concat key (format "<%s>" (substring (file-name-directory (abbreviate-file-name current-value))
+                                                                  (+ 1 (length mip--open-project-path))))))
+          (setq key (concat key (format "<%s>" (substring root (+ 1 (length mip--open-project-path))))))))
+    (if new-old-key
+        (puthash new-old-key current-value mip--open-project-files-hash))
+    (puthash key value mip--open-project-files-hash)))
 
 
 (defun mip-scan-path (path &optional recursive)
@@ -269,17 +303,22 @@ Behavior depends on the variable mip-uniquify-file-method."
 
 If RECURSIVE is non-nil, this function is called recursively for
 all subdirectories of PATH."
-  (let* ((current-files (directory-files path t nil t))
-         (directories (-filter (lambda (file-path)
-                                 (if (file-directory-p file-path) t)) current-files))
-         (files (-difference current-files directories)))
-    (-each files (lambda (file-path)
-                   (mip-open-project-files-hash-put (file-name-nondirectory file-path) file-path)))
-    (if recursive
-        (dolist (directory directories t)
-          (if (and (not (string-equal (file-name-nondirectory directory) "."))
-                   (not (string-equal (file-name-nondirectory directory) "..")))
-              (mip-scan-path (concat (file-name-as-directory path) (file-name-nondirectory directory))))))))
+  (if (not (mip-should-skip-path-p path))
+      (let* ((current-files (directory-files path t nil t))
+             (subdirectories (if recursive (-filter (lambda (file-path)
+                                                      (file-directory-p file-path))
+                                                    current-files)))
+             (files (-difference current-files subdirectories)))
+          (-each files
+                 (lambda (file-path)
+                   (mip-open-project-files-hash-put (file-name-nondirectory file-path)
+                                                    file-path)))
+          (-each subdirectories
+                 (lambda (directory-path)
+                   (let ((dirname (file-name-nondirectory directory-path)))
+                     (if (and (not (string-equal dirname "."))
+                              (not (string-equal dirname "..")))
+                         (mip-scan-path directory-path t))))))))
 
 
 (defun mip-project-files (filter-ignored)
@@ -288,13 +327,8 @@ all subdirectories of PATH."
 If FILTER is non-nil, ignored files will be filtered out."
   (let ((files '()))
     (maphash (lambda (filename filepath)
-               (if filter-ignored
-                   (let ((ignore nil))
-                     (-each mip-ignored-files (lambda (rule)
-                                                (setq ignore (string-match rule filepath))))
-                     (if (not ignore)
-                         (setq files (cons filename files))))
-                 (setq files (cons filename files))))
+               (if (not (and filter-ignored (mip-should-ignore-path-p filepath)))
+                   (setq files (cons filename files))))
              mip--open-project-files-hash)
     files))
 
@@ -305,29 +339,29 @@ If FILTER is non-nil, ignored files will be filtered out."
 Return nil if FILE doesn't belong to any project."
   (let ((projects (mip-scan-workspaces mip-workspaces))
         (belongs nil))
-    (dolist (project projects belongs)
-      (let ((project-path (mip-find-project-directory project)))
-        (if (string-prefix-p (abbreviate-file-name project-path) (abbreviate-file-name file))
-            (setq belongs project))))))
+    (-each projects (lambda (project)
+             (let ((project-path (mip-find-project-tory project)))
+               (if (string-prefix-p (abbreviate-file-name project-path) (abbreviate-file-name file))
+                   (setq belongs project)))))
+    belongs))
 
 
 (defun mip-file-belongs-to-project (file project)
   "Return t if FILE belongs to PROJECT, nil otherwise."
-  (if (string-prefix-p (abbreviate-file-name (mip-find-project-directory project)) (abbreviate-file-name file))
-      t
-    nil))
+  (string-prefix-p (abbreviate-file-name (mip-find-project-directory project)) (abbreviate-file-name file)))
 
 
 (defun mip-kill-project-buffers (project)
   "Kill all buffers belonging to PROJECT."
   (let ((interrupted nil))
-    (dolist (buffer (buffer-list) t)
-      (let ((filename (buffer-file-name buffer)))
-        (if filename
-            (if (mip-file-belongs-to-project filename project)
-                (if (not (kill-buffer buffer))
-                    (setq interrupted t))))))
-    interrupted))
+    (-each buffer-list
+         (lambda (buffer)
+           (let ((filename (buffer-file-name buffer)))
+             (if filename
+                 (if (mip-file-belongs-to-project filename project)
+                     (if (not (kill-buffer buffer))
+                         (setq interrupted t)))))))
+           interrupted))
 
 (defun mip-maybe-append-mode-line-string (string)
   "Appends STRING to global-mode-string if it isn't there already."
@@ -382,6 +416,7 @@ Close previously open project if any."
         (if (and (not (string-equal project mip--open-project)) project)
             (mip-open-project project)))))
 (add-hook 'find-file-hook 'mip-maybe-open-project)
+
 
 ;;; Interactive functions:
 
