@@ -249,7 +249,7 @@ If IGNORED is a list, projects that match the regexes are ignored."
     (-each workspaces (lambda (workspace)
              (if (file-directory-p workspace)
                  (setq projects (append projects (mip-scan-workspace workspace ignored)))
-               (error "workspace %s is not a directory" workspace))))
+               (warn "workspace %s is not a directory" workspace))))
     projects))
 
 
