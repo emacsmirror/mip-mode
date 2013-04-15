@@ -73,11 +73,11 @@
 
 ;;; How to use:
 
-;; C-c wg: go to project (mip-goto-project)
-;; C-c wk: close project (mip-close-open-project)
-;; C-c wr: refresh project (mip-refresh-open-project)
-;; C-c wc: current project (mip-get-open-project)
-;; C-c wf: find file in current project (mip-find-file-in-open-project)
+;; C-c pg: go to project (mip-goto-project)
+;; C-c pk: close project (mip-close-open-project)
+;; C-c pr: refresh project (mip-refresh-open-project)
+;; C-c pc: current project (mip-get-open-project)
+;; C-c pf: find file in current project (mip-find-file-in-open-project)
 
 ;;; Code:
 
