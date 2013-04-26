@@ -340,7 +340,7 @@ Return nil if FILE doesn't belong to any project."
   (let ((projects (mip-scan-workspaces mip-workspaces))
         (belongs nil))
     (-each projects (lambda (project)
-             (let ((project-path (mip-find-project-tory project)))
+             (let ((project-path (mip-find-project-directory project)))
                (if (string-prefix-p (abbreviate-file-name project-path) (abbreviate-file-name file))
                    (setq belongs project)))))
     belongs))
@@ -478,12 +478,20 @@ be shown."
                           path
                         (concat mip--open-project-path "/" file)))))))
 
+(defun mip-visit-project-tags ()
+  "Visit the TAGS file of the current project if one exists."
+  (interactive)
+  (let ((file (concat mip--open-project-path "/" "TAGS")))
+    (if (file-exists-p file)
+        (visit-tags-table file))))
+
 
 (define-key mip-mode-map (kbd "C-c pg") 'mip-goto-project)
 (define-key mip-mode-map (kbd "C-c pf") 'mip-find-file-in-open-project)
 (define-key mip-mode-map (kbd "C-c pk") 'mip-close-open-project)
 (define-key mip-mode-map (kbd "C-c pr") 'mip-refresh-open-project)
 (define-key mip-mode-map (kbd "C-c pc") 'mip-get-open-project)
+(define-key mip-mode-map (kbd "C-c pt") 'mip-visit-project-tags)
 
 (define-minor-mode mip-mode
   "mip mode"
