@@ -108,7 +108,7 @@
   :prefix "mip-"
   :version "24.1.1"
   :link '(emacs-commentary-link "mip-mode")
-  :link '(url-link "https://github.com/ereilin/mip-mode"))
+  :link '(url-link "https://github.com/da4c30ff/mip-mode"))
 
 (defcustom mip-ignored-projects '()
   "List of projects to ignore.
