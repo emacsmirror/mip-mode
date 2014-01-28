@@ -494,12 +494,14 @@ be shown."
 (define-key mip-mode-map (kbd "C-c pc") 'mip-get-open-project)
 (define-key mip-mode-map (kbd "C-c pt") 'mip-visit-project-tags)
 
+;;;###autoload
 (define-minor-mode mip-mode
   "mip mode"
   nil
   " mip"
   mip-mode-map)
 
+;;;###autoload
 (define-globalized-minor-mode global-mip-mode mip-mode (lambda () (mip-mode t)))
 
 (provide 'mip-mode)
