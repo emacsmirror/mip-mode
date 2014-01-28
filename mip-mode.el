@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2012 Eeli Reilin
 
-;; Author: Eeli Reilin <eeli.reilin@gmail.com>
+;; Author: Eeli Reilin <eeli@defun.io>
 ;; Keywords: workspaces workspace project projects mip-mode
 ;; Package-Requires: ((dash "2.5.0"))
 
