@@ -470,8 +470,7 @@ file.
 When called with a prefix argument, all files in the project will
 be shown."
   (interactive "P")
-  (let ((project (or mip--open-project
-                     (mip-goto-project)))) ;; Goto a project if not in one already
+  (let ((project (or mip--open-project (mip-goto-project)))) ;; Goto a project if not in one already
        (let ((file (ido-completing-read (concat "Find file in " mip--open-project ": ") (mip-project-files (not arg)))))
          (let ((path (gethash file mip--open-project-files-hash)))
            (find-file (if path
@@ -488,7 +487,11 @@ be shown."
 
 ;;;###autoload
 (define-minor-mode mip-mode
-  "mip mode"
+  "Toggle mip mode.
+Interactively with no argument, this command toggles the mode.
+A positive prefix argument enables the mode, any other prefix
+argument disables it.  From Lisp, argument omitted or nil enables
+the mode."
   nil
   " mip"
   mip-mode-map)
