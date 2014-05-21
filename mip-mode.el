@@ -478,13 +478,6 @@ be shown."
                           path
                         (concat mip--open-project-path "/" file)))))))
 
-(defun mip-visit-project-tags ()
-  "Visit the TAGS file of the current project if one exists."
-  (interactive)
-  (let ((file (concat mip--open-project-path "/" "TAGS")))
-    (if (file-exists-p file)
-        (visit-tags-table file))))
-
 
 (define-key mip-mode-map (kbd "C-c pg") 'mip-goto-project)
 (define-key mip-mode-map (kbd "C-c pf") 'mip-find-file-in-open-project)
