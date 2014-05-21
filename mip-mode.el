@@ -470,9 +470,8 @@ file.
 When called with a prefix argument, all files in the project will
 be shown."
   (interactive "P")
-  (let ((project (if mip--open-project
-                     mip--open-project
-                   (mip-goto-project)))) ;; Goto a project first if not in one already
+  (let ((project (or mip--open-project
+                     (mip-goto-project)))) ;; Goto a project if not in one already
        (let ((file (ido-completing-read (concat "Find file in " mip--open-project ": ") (mip-project-files (not arg)))))
          (let ((path (gethash file mip--open-project-files-hash)))
            (find-file (if path
