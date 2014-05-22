@@ -1,23 +1,27 @@
 # Description
 
-mip-mode is a minor mode to quickly switch between multiple projects and
-files.
-
-mip-mode is written for learning and personal usage.
+mip-mode is a minor mode to quickly navigating between multiple
+projects and files.
 
 # Dependencies
 
-Currently mip-mode depends only on `ido`.
+Currently mip-mode depends only on `ido` and `cl`.
 
 # Installation
 
-Add `mip-mode.el` to your `load-path`:
+Easiest way to install would be from Melpa:
+
+```
+M-x package-install mip-mode
+```
+
+Alternatively, you can download the `mip-mode.el` and add it to your `load-path`:
 
 ```
 (add-to-list 'load-path "~/.emacs.d/vendor/mip-mode")
 ```
 
-mip-mode can be enabled globally and locally.  To select mip-mode
+mip-mode can be enabled globally or locally.  To select mip-mode
 globally, enter the following to your `.emacs` file:
 
 ```
@@ -25,7 +29,9 @@ globally, enter the following to your `.emacs` file:
 (global-mip-mode t)
 ```
 
-Next, mip-mode must be told where your projects are located:
+# Configuration
+
+First, mip-mode must be told where your projects are located:
 
 ```
 (add-to-list 'mip-workspaces "~/workspace")
@@ -37,9 +43,11 @@ Projects and files can be ignored:
 
 ```
 (add-to-list 'mip-ignored-projects "temp-project1")
-(add-to-list 'mip-ignored-projects "temp.*$") ;; Projects can also be matches using regular expressions
+;; Projects can also be ignored using regular expressions
+(add-to-list 'mip-ignored-projects "temp.*$")
 
-(add-to-list 'mip-ignored-files "^\\..*$") ;; Ignore all dot files
+;; Ignore all dot files
+(add-to-list 'mip-ignored-files "^\\..*$")
 ```
 
 Check out the commentary for more information.
@@ -63,8 +71,19 @@ Interactive functions provided by mip-mode:
 * `mip-get-open-project` (C-c pc)
   Shows the name of the current project in the minibuffer.
 
-# Todo
+# License
 
-* Multiple open projects
-* Moving files within a project
-* Project specific settings
+Copyright © 2012-2014 Eeli Reilin
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
