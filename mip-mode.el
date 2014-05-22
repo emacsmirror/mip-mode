@@ -499,7 +499,6 @@ be shown."
 (define-key mip-mode-map (kbd "C-c pk") 'mip-close-open-project)
 (define-key mip-mode-map (kbd "C-c pr") 'mip-refresh-open-project)
 (define-key mip-mode-map (kbd "C-c pc") 'mip-get-open-project)
-(define-key mip-mode-map (kbd "C-c pt") 'mip-visit-project-tags)
 
 ;;;###autoload
 (define-minor-mode mip-mode
