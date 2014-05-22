@@ -107,9 +107,8 @@
 (defgroup mip nil
   "mip-mode; virtual projects for Emacs."
   :prefix "mip-"
-  :version "24.1.1"
   :link '(emacs-commentary-link "mip-mode")
-  :link '(url-link "https://github.com/da4c30ff/mip-mode"))
+  :link '(url-link "https://github.com/gaudecker/mip-mode"))
 
 (defcustom mip-ignored-projects '()
   "List of projects to ignore.
