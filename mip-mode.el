@@ -118,6 +118,14 @@ to match multiple projects."
   :type '(repeat string)
   :group 'mip)
 
+(defcustom mip-ignored-files '()
+  "List of files to ignore.
+
+Filenames can be written as whole or as regular expressions
+to match multiple files."
+  :type '(repeat string)
+  :group 'mip)
+
 (defcustom mip-workspaces '()
   "List of paths to workspaces.
 
