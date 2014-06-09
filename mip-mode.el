@@ -1,8 +1,8 @@
 ;;; mip-mode.el --- virtual projects for emacs.
 
-;; Copyright (C) 2012 Eeli Reilin
+;; Copyright (C) 2012-2014 Eeli Reilin
 
-;; Author: Eeli Reilin <eeli@defun.io>
+;; Author: Eeli Reilin <gaudecker@fea.st>
 ;; Keywords: workspaces workspace project projects mip-mode
 ;; Package-Requires: ((dash "2.5.0"))
 
