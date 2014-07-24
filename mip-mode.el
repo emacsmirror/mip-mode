@@ -217,6 +217,9 @@ projects at once.  Use with caution."
   "Return t if PATH is a project root, nil otherwise."
   (string-equal path (concat mip--open-project-path "/")))
 
+(defun mip-is-current-project-p (project)
+  (string-equal mip--open-project project))
+
 
 (defun mip-should-ignore-path-p (path)
   "Return t if PATH should be ignored, nil otherwise."
@@ -374,57 +377,52 @@ Return nil if FILE doesn't belong to any project."
       (let* ((buffer (car buffers))
              (filename (buffer-file-name buffer)))
         (when (and filename
-                 (mip-file-belongs-to-project filename project)
-                 (not (kill-buffer buffer)))
+                   (mip-file-belongs-to-project filename project)
+                   (not (kill-buffer buffer)))
             (setq interrupted t)))
       (setq buffers (cdr buffers)))
     interrupted))
 
-(defun mip-maybe-append-mode-line-string (string)
-  "Appends STRING to global-mode-string if it isn't there already."
-  (let ((found nil))
-    (dolist (string global-mode-string t)
-      (if (eq 'string 'mip--mode-line-string)
-          (setq found t)))
-    (unless found
-      )))
+(defun mip-maybe-kill-project-buffers (project)
+  "Kill all buffers belonging to PROJECT only if `mip-kill-project-buffers-on-close' is non-nil.
+
+Return t if buffers were killed, nil otherwise."
+  (not (when mip-kill-project-buffers-on-close
+    (mip-kill-project-buffers project))))
 
 (defun mip-open-project (project)
   "Open project PROJECT if it's not already open.
 
 Close previously open project if any."
-  (if (not (string-equal mip--open-project project))
-      (if (if mip--open-project
-              (mip-close-project mip--open-project)
-            t)
-          (progn
-            (setq mip--open-project project
-                  mip--open-project-path (mip-find-project-directory project)
-                  mip--open-project-files-hash (make-hash-table :test 'equal))
-            (mip-scan-path mip--open-project-path)
-            (cd mip--open-project-path)
-            (run-hooks 'mip-open-project-hook)
-            (if mip-show-on-mode-line
-                (progn
-                  (setq mip--mode-line-string (format mip-mode-line-format mip--open-project))
-                  (add-to-list 'global-mode-string mip--mode-line-string t)))
-            (message "project %s opened" project)))
+  (if (and (not (mip-is-current-project-p project))
+           (or (not mip--open-project)
+               (mip-close-project mip--open-project)))
+      (progn
+        (setq mip--open-project project
+              mip--open-project-path (mip-find-project-directory project)
+              mip--open-project-files-hash (make-hash-table :test 'equal))
+        (mip-scan-path mip--open-project-path)
+        (cd mip--open-project-path)
+        (run-hooks 'mip-open-project-hook)
+        (when mip-show-on-mode-line
+          (setq mip--mode-line-string (format mip-mode-line-format mip--open-project))
+          (add-to-list 'global-mode-string mip--mode-line-string t))
+        (message "project %s opened" project))
     (message "project %s already open" project)))
 
 
 (defun mip-close-project (project)
   "Close PROJECT if it's open."
-  (when (and (string-equal mip--open-project project)
-           (if mip-kill-project-buffers-on-close
-               (not (mip-kill-project-buffers project))
-             t))
-        (run-hooks 'mip-close-project-hook)
-        (delq mip--mode-line-string global-mode-string)
-        (setq mip--open-project nil
-              mip--open-project-path nil
-              mip--open-project-files-hash nil
-              mip--mode-line-string nil)
-        (message "project %s closed" project)))
+  (when (and project
+             (mip-is-current-project-p project)
+             (mip-maybe-kill-project-buffers project))
+    (run-hooks 'mip-close-project-hook)
+    (setq global-mode-string (delete mip--mode-line-string global-mode-string)
+          mip--open-project nil
+          mip--open-project-path nil
+          mip--open-project-files-hash nil
+          mip--mode-line-string nil)
+    (message "project %s closed" project)))
 
 
 (defun mip-maybe-open-project ()
