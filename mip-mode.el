@@ -135,6 +135,11 @@ the functionality of mip-mode becomes undefined."
   :type '(repeat directory)
   :group 'mip)
 
+(defcustom mip-custom-commands '()
+  "List of project specific custom commands."
+  :type '(repeat sexp)
+  :group 'mip)
+
 (defcustom mip-kill-project-buffers-on-close nil
   "Kill all project's buffers on close.
 
@@ -432,6 +437,10 @@ Close previously open project if any."
             (mip-open-project project)))))
 (add-hook 'find-file-hook 'mip-maybe-open-project)
 
+(defun mip-get-custom-commands (project)
+  "Return a list of commands for PROJECT."
+  (cdr (assoc project mip-custom-commands)))
+
 
 ;;; Interactive functions:
 
@@ -491,12 +500,41 @@ be shown."
            (find-file (or path
                           (concat mip--open-project-path "/" file)))))))
 
+(defun mip-prompt-custom-command ()
+  "Show user interface for selecting custom command."
+  (interactive)
+  (let ((commands (mip-get-custom-commands mip--open-project)))
+    (save-window-excursion
+      (delete-other-windows)
+      (switch-to-buffer-other-window "*Project Commands*")
+      (erase-buffer)
+      (insert (eval-when-compile
+		  (let ((header
+			 "Press key for a project command:
+--------------------------------        >   Remove restriction
+a   Agenda for current week or day      e   Export agenda views
+")
+			(start 0))
+		    (while (string-match
+			    "\\(^\\|   \\|(\\)\\(\\S-\\)\\( \\|=\\)"
+			    header start)
+		      (setq start (match-end 0))
+		      (add-text-properties (match-beginning 2) (match-end 2)
+					   '(face bold) header))
+		    header)))
+      (message "Press key for project command:")
+      (let* ((c (char-to-string (read-char-exclusive)))
+             (cmd (cdr (assoc c commands))))
+        (if cmd
+            (call-interactively cmd)
+          (error "Invalid key %s" c))))))
 
 (define-key mip-mode-map (kbd "C-c pg") 'mip-goto-project)
 (define-key mip-mode-map (kbd "C-c pf") 'mip-find-file-in-open-project)
 (define-key mip-mode-map (kbd "C-c pk") 'mip-close-open-project)
 (define-key mip-mode-map (kbd "C-c pr") 'mip-refresh-open-project)
-(define-key mip-mode-map (kbd "C-c pc") 'mip-get-open-project)
+(define-key mip-mode-map (kbd "C-c pp") 'mip-get-open-project)
+(define-key mip-mode-map (kbd "C-c pc") 'mip-prompt-custom-command)
 
 ;;;###autoload
 (define-minor-mode mip-mode
