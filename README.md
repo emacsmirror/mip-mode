@@ -1,6 +1,6 @@
 # Description
 
-mip-mode is a minor mode to quickly navigating between multiple
+mip-mode is a minor mode for quick navigation between multiple
 projects and files.
 
 # Dependencies
@@ -9,7 +9,7 @@ Currently mip-mode depends only on `ido` and `cl`.
 
 # Installation
 
-Easiest way to install would be from Melpa:
+Easiest way to install would be from [Melpa](http://melpa.milkbox.net/):
 
 ```
 M-x package-install mip-mode
