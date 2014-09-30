@@ -254,7 +254,7 @@ If IGNORED is a list, projects that match the regexes are ignored."
     (dolist (path paths projects)
       (let ((file (file-name-nondirectory path)))
         (if (and (file-directory-p path) (not (string-prefix-p "." file)))
-            (if (listp ignored)
+            (if (and (listp ignored) (not (null ignored)))
                 (dolist (regexp ignored nil)
                   (if (not (string-match regexp file))
                       (add-to-list 'projects file)
