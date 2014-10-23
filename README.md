@@ -1,7 +1,6 @@
-# Description
+# Mip-mode [![MELPA](http://melpa.org/packages/mip-mode-badge.svg)](http://melpa.org/#/mip-mode)
 
-mip-mode is a minor mode for quick navigation between multiple
-projects and files.
+Minor mode for quick navigation between multiple projects and files.
 
 # Dependencies
 
