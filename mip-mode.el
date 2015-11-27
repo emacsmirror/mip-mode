@@ -376,7 +376,7 @@ Return nil if FILE doesn't belong to any project."
 (defun mip-kill-project-buffers (project)
   "Kill all buffers belonging to PROJECT."
   (let ((interrupted nil)
-        (buffers buffer-list))
+        (buffers (buffer-list)))
     (while buffers
       (let* ((buffer (car buffers))
              (filename (buffer-file-name buffer)))
